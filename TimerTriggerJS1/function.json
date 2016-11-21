@@ -1,0 +1,18 @@
+{
+  "bindings": [
+    {
+      "name": "myTimer",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "0/10 * * * * *"
+    },
+    {
+      "type": "queue",
+      "name": "myQueueItem",
+      "queueName": "function-bindings",
+      "connection": "edugomesfuncstorage2_STORAGE",
+      "direction": "out"
+    }
+  ],
+  "disabled": true
+}

@@ -1,0 +1,19 @@
+{
+  "bindings": [
+    {
+      "name": "myQueueItem",
+      "type": "queueTrigger",
+      "direction": "in",
+      "queueName": "function-bindings",
+      "connection": "edugomesfuncstorage2_STORAGE"
+    },
+    {
+      "type": "table",
+      "name": "myTable",
+      "tableName": "myTable",
+      "connection": "edugomesfuncstorage2_STORAGE",
+      "direction": "out"
+    }
+  ],
+  "disabled": false
+}
