@@ -1,6 +1,6 @@
 #r "Microsoft.WindowsAzure.Storage"
 #r "Newtonsoft.Json"
-#r "System.Drawing
+#r "System.Drawing"
  
 using System.Net;
 using System.Net.Http;
@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.IO; 
 using System.Drawing;
+using System.Drawing.Imaging;
  
 public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, TraceWriter log)
 {
