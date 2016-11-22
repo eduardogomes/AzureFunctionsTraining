@@ -52,7 +52,24 @@ public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, TraceW
     response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
     return response;
 }
+  
+static async Task<string> CallVisionAPI(Stream image)
+{
+    using (var client = new HttpClient())
+    {
+        var content = new StreamContent(image);
+        var url = "https://api.projectoxford.ai/vision/v1.0/analyze?visualFeatures=Faces";
+        client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Environment.GetEnvironmentVariable("Vision_API_Subscription_Key"));
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        var httpResponse = await client.PostAsync(url, content);
  
+        if (httpResponse.StatusCode == HttpStatusCode.OK){
+            return await httpResponse.Content.ReadAsStringAsync();
+        }
+    }
+    return null;
+}
+
 public class ImageData {
     public List<Face> Faces { get; set; }
 }
