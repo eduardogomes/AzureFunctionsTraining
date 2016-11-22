@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using Newtonsoft.Json;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.IO; 
+using System.Drawing;
  
 public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, TraceWriter log)
 {
