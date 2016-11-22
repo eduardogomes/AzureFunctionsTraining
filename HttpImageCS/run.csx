@@ -1,5 +1,6 @@
 #r "Microsoft.WindowsAzure.Storage"
 #r "Newtonsoft.Json"
+#r "System.Drawing
  
 using System.Net;
 using System.Net.Http;
@@ -8,45 +9,48 @@ using Newtonsoft.Json;
 using Microsoft.WindowsAzure.Storage.Table;
 using System.IO; 
  
-public static async Task Run(Stream image, string name, IAsyncCollector<FaceRectangle> outTable, TraceWriter log)
+public static async Task<HttpResponseMessage> Run(HttpRequestMessage req, TraceWriter log)
 {
     var image = await req.Content.ReadAsStreamAsync();
+ 
+    MemoryStream mem = new MemoryStream();
+    image.CopyTo(mem); //make a copy since one gets destroy in the other API. Lame, I know.
+    image.Position = 0;
+    mem.Position = 0;
      
-    string result = await CallVisionAPI(image); //STREAM
+    string result = await CallVisionAPI(image); 
     log.Info(result); 
  
-    if (String.IsNullOrEmpty(result))
-    {
+    if (String.IsNullOrEmpty(result)) {
         return req.CreateResponse(HttpStatusCode.BadRequest);
     }
- 
+     
     ImageData imageData = JsonConvert.DeserializeObject<ImageData>(result);
-    foreach (Face face in imageData.Faces)
-    {
-        var faceRectangle = face.FaceRectangle;
-        faceRectangle.RowKey = Guid.NewGuid().ToString();
-        faceRectangle.PartitionKey = "Functions";
-        faceRectangle.ImageFile = name + ".jpg";
-        await outTable.AddAsync(faceRectangle); 
-    }
-    return req.CreateResponse(HttpStatusCode.OK, "Nice Job");  
-}
  
-static async Task<string> CallVisionAPI(Stream image)
-{
-    using (var client = new HttpClient())
+    MemoryStream outputStream = new MemoryStream();
+    using(Image maybeFace = Image.FromStream(mem, true))
     {
-        var content = new StreamContent(image);
-        var url = "https://api.projectoxford.ai/vision/v1.0/analyze?visualFeatures=Faces";
-        client.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Environment.GetEnvironmentVariable("Vision_API_Subscription_Key"));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-        var httpResponse = await client.PostAsync(url, content);
- 
-        if (httpResponse.StatusCode == HttpStatusCode.OK){
-            return await httpResponse.Content.ReadAsStringAsync();
+        using (Graphics g = Graphics.FromImage(maybeFace))
+        {
+            Pen yellowPen = new Pen(Color.Yellow, 4);
+            foreach (Face face in imageData.Faces)
+            {
+                var faceRectangle = face.FaceRectangle;
+                g.DrawRectangle(yellowPen, 
+                    faceRectangle.Left, faceRectangle.Top, 
+                    faceRectangle.Width, faceRectangle.Height);
+            }
         }
+        maybeFace.Save(outputStream, ImageFormat.Jpeg);
     }
-    return null;
+     
+    var response = new HttpResponseMessage()
+    {
+        Content = new ByteArrayContent(outputStream.ToArray()),
+        StatusCode = HttpStatusCode.OK,
+    };
+    response.Content.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+    return response;
 }
  
 public class ImageData {
